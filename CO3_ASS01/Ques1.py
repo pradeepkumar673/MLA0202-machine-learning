@@ -1,33 +1,49 @@
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA, FactorAnalysis, FastICA
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
 
-wine = load_wine()
-X = wine.data
-y = wine.target
+df = pd.read_csv("Mall_Customers.csv")
+df['Gender'] = df['Gender'].map({'Male': 0, 'Female': 1})
+X = df[['Age', 'Annual Income (k$)', 'Spending Score (1-100)', 'Gender']]
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
+wcss = []
+for k in range(1, 11):
+    km = KMeans(n_clusters=k, init='k-means++', random_state=42, n_init=10)
+    km.fit(X_scaled)
+    wcss.append(km.inertia_)
+
+plt.plot(range(1, 11), wcss, marker='o')
+plt.xlabel('k')
+plt.ylabel('WCSS')
+plt.show()
+
+sil_scores = []
+for k in range(2, 11):
+    km = KMeans(n_clusters=k, init='k-means++', random_state=42, n_init=10)
+    labels = km.fit_predict(X_scaled)
+    sil_scores.append(silhouette_score(X_scaled, labels))
+
+plt.plot(range(2, 11), sil_scores, marker='o')
+plt.xlabel('k')
+plt.ylabel('Silhouette Score')
+plt.show()
+
+kmeans = KMeans(n_clusters=5, init='k-means++', random_state=42, n_init=10)
+clusters = kmeans.fit_predict(X_scaled)
+
 pca = PCA(n_components=2)
 X_pca = pca.fit_transform(X_scaled)
 
-fa = FactorAnalysis(n_components=2, random_state=42)
-X_fa = fa.fit_transform(X_scaled)
-
-ica = FastICA(n_components=2, random_state=42, max_iter=1000)
-X_ica = ica.fit_transform(X_scaled)
-
-fig, axes = plt.subplots(1, 3, figsize=(18,5))
-for ax, data, title in zip(axes, [X_pca, X_fa, X_ica], ['PCA', 'Factor Analysis', 'ICA']):
-    ax.scatter(data[:,0], data[:,1], c=y, cmap='viridis', s=40, edgecolor='k')
-    ax.set_title(title)
-
+plt.figure(figsize=(7,5))
+sns.scatterplot(x=X_pca[:,0], y=X_pca[:,1], hue=clusters, palette='Set1')
+plt.xlabel('PC1')
+plt.ylabel('PC2')
 plt.show()
-
-print(pca.explained_variance_ratio_)
-print(pca.components_)
-print(fa.components_)
-print(ica.mixing_)
