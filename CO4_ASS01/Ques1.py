@@ -1,8 +1,8 @@
-from pgmpy.models import BayesianNetwork
+from pgmpy.models import DiscreteBayesianNetwork
 from pgmpy.factors.discrete import TabularCPD
 from pgmpy.inference import VariableElimination
 
-model = BayesianNetwork([('Obesity', 'Diabetes'), ('HighBloodSugar', 'Diabetes')])
+model = DiscreteBayesianNetwork([('Obesity', 'Diabetes'), ('HighBloodSugar', 'Diabetes')])
 
 cpd_obesity = TabularCPD(variable='Obesity', variable_card=2, values=[[0.7], [0.3]])
 
